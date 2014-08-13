@@ -1,0 +1,52 @@
+Compiling TFD under DECAF_1.2
+
+0. Make sure you have correctly installed DECAF under some directory that 
+   I will refer as DECAF_PATH
+    For this, follow the instructions in DECAF_PATH/INSTALL 
+    More help is available at:
+      http://code.google.com/p/decaf-platform/wiki/DECAF
+
+1. Compiling TFD
+     cd TFD_PATH
+     ./configure --decaf-path DECAF_PATH
+     make
+
+    This step should create a library called tfd.so under TFD_PATH
+    The resulting TFD plugin supports v50 traces and v20 state files, 
+    which are compatible with the ones in the Bitblaze Vine 1.0 release.
+    If you want the latest v60 traces and v40 state files, use instead:
+      ./configure --decaf-path DECAF_PATH --latest 
+    or 
+      ./configure --decaf-path DECAF_PATH --trace60 --state40
+
+2. Compiling the hooks
+     make hooks
+
+    This step should create a number of hooks libraries (.so files) under
+      TFD_PATH/hooks
+
+3. Make sure that TFD_PATH and TFD_PATH/hooks are 
+   both included in your LD_LIBRARY_PATH environment variable. 
+   These are needed because the plugin and hooks are dynamically loaded 
+   using the 'load_plugin' or 'load_hooks' commands in the monitor, and 
+   the will look only in the standard directories such as 
+   /usr/lib and maybe /usr/local/lib
+
+
+Configuring QEMU's network (tap) interface
+==========================================
+Create a script /etc/qemu-ifup, including the following lines:
+#!/bin/sh
+sudo /sbin/ifconfig $1 <ip_address> up
+
+where <ip_address> is the address used by the host machine
+
+This should allow you to run the tap interface as *root*
+
+Start DECAF
+===========
+1. $sudo chmod 666 /dev/net/tun
+2. $DECAF_PATH/i386-softmmu/qemu-system-i386 -m 512 -net nic,vlan=0 -net tap,vlan=0,script=/etc/qemu-ifup -monitor stdio -snapshot <image_file>
+
+where <image_file> is an absolute path to the guest image
+
